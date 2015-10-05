@@ -8,7 +8,9 @@ import org.junit.Test;
 import net.zerobandwidth.games.Roller ;
 
 /**
- * Exercises {@link Roller}.
+ * Exercises {@link Roller}. Note that, since this naturally involves some
+ * random numbers, sporadic failures may occur. If this happens often, consider
+ * bumping up the {@link #TRIALS} constant. 
  * @since 0.01.20151004
  */
 public class RollerTest
@@ -206,5 +208,131 @@ public class RollerTest
 		assertFalse( Roller.isValidTarget( ((int)Short.MAX_VALUE) + 1 ) ) ;
 		assertFalse( Roller.isValidTarget( ((int)Short.MAX_VALUE) + 1 ) ) ;
 		assertFalse( Roller.isValidTarget( ((int)Short.MIN_VALUE) - 1 ) ) ;				
+	}
+	
+	/**
+	 * Verifies reciprocity of {@link Roller#parse} and {@link Roller#toString}. 
+	 * @throws ParseException if the parse fails (this fails the test)
+	 */
+	@Test
+	public void testToString()
+	throws ParseException
+	{
+		final String sSpec = "5d4-3k2s1x" ;
+		assertEquals( sSpec, Roller.parse(sSpec).toString() ) ;
+	}
+
+	/**
+	 * Makes some of the protected methods visible to the test class.
+	 */
+	protected class InspectableRoller extends Roller
+	{
+		public InspectableRoller()
+		throws ParseException
+		{ super() ; }
+		
+		@Override
+		public InspectableRoller set( String sSpec )
+		throws ParseException
+		{ super.set(sSpec) ; return this ; }
+		
+		@Override
+		public short rollOneDie()
+		{ return super.rollOneDie() ; }
+		
+		@Override
+		public short[] getKeptDice( short[] azAllDice )
+		{ return super.getKeptDice( azAllDice ) ; }
+		
+		@Override
+		public short evaluate( short[] azDieResults )
+		{ return super.evaluate( azDieResults ) ; }
+	}
+	
+	/** How many times to try testing randomized numbers. */
+	private static final int TRIALS = 1000 ;
+	
+	/** Exercises {@link Roller#rollOneDie}. */
+	@Test
+	public void testRollOneDie()
+	throws ParseException
+	{
+		InspectableRoller roll = new InspectableRoller() ;
+		assertRollOneDie( roll.set( "3d8" ) ) ;
+		assertRollOneDie( roll.set( "4d10k3" ) ) ;
+		assertRollOneDie( roll.set( "3d6s4" ) ) ;
+	}
+	
+	/** Consumed by {@link #testRollOneDie} */
+	private static void assertRollOneDie( InspectableRoller roll )
+	{
+		for( int i = 0 ; i < TRIALS ; i++ )
+		{
+			short zDie = roll.rollOneDie() ;
+			if( roll.getSuccessTarget() != Roller.NOT_SET )
+			{ // Expect the bonus to be applied.
+				assertTrue( roll.getBonus() <= zDie ) ;
+				assertTrue( zDie <= roll.getDieType() + roll.getBonus() ) ;
+			}
+			else
+			{ // Don't expect the bonus to be applied.
+				assertTrue( 0 < zDie && zDie <= roll.getDieType() ) ;
+			}
+		}
+	}
+	
+	/** Exercises {@link Roller#rollOneDie} with exploding dice. */
+	@Test
+	public void testRollOneExplodingDie()
+	throws ParseException
+	{
+		InspectableRoller roll = new InspectableRoller() ;
+		roll.set( "1d8x" ) ;
+		boolean bGotExplodedDie = false ;
+		for( int i = 0 ; i < TRIALS ; i++ )
+		{
+			if( roll.rollOneDie() > 8 )
+			{
+				bGotExplodedDie = true ;
+				break ;
+			}
+		}
+		if( !bGotExplodedDie )
+			fail( "Got no exploded dice in any trial." ) ;
+		
+		// Now try with a target number that requires exploding to reach it.
+		roll.set( Integer.toString(TRIALS) + "d8xs10" ) ;
+		Roller.Result res = roll.roll() ;
+		assertTrue( res.getValue() > 0 ) ;
+	}
+	
+	/** Exercises {@link Roller#getKeptDice} */
+	@Test
+	public void testGetKeptDice()
+	throws ParseException
+	{
+		short[] azAllDice = { 8, 6, 7, 9, 3, 0, 9 } ;        // Not quite Jenny.
+		short[] azExpected = { 9, 9, 8, 7, 6, 3, 0 } ;
+		InspectableRoller roll = new InspectableRoller() ;
+		roll.set( "7d10k7" ) ;
+		short[] azKeptDice = roll.getKeptDice( azAllDice ) ;
+		assertEquals( azExpected.length, azKeptDice.length ) ;
+		for( int i = 0 ; i < azExpected.length ; i++ )
+			assertEquals( azExpected[i], azKeptDice[i] ) ;
+	}
+	
+	/** Exercises {@link Roller#evaluate}. */
+	@Test
+	public void testEvaluate()
+	throws ParseException
+	{
+		short[] azRolls = { 8, 6, 7, 5, 3, 0, 9 } ;      // There you go, Jenny.
+		InspectableRoller roll = new InspectableRoller() ;
+		roll.set( "7d10" ) ;
+		assertEquals( 8+6+7+5+3+9, roll.evaluate(azRolls) ) ;
+		roll.setBonus(3) ;
+		assertEquals( 8+6+7+5+3+9+3, roll.evaluate(azRolls) ) ;
+		roll.setSuccessTarget(5) ; // Bonus wasn't applied to array; testing raw
+		assertEquals( 5, roll.evaluate(azRolls) ) ;      // Five rolls are >= 5.
 	}
 }

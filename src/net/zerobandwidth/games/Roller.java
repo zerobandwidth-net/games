@@ -1,6 +1,7 @@
 package net.zerobandwidth.games;
 
 import java.text.ParseException;
+import java.util.Random;
 
 /**
  * Describes a procedure for rolling dice, and provides methods to execute that
@@ -9,6 +10,81 @@ import java.text.ParseException;
  */
 public class Roller
 {
+	/**
+	 * Provides details of a dice roll result.
+	 * 
+	 * The class intentionally provides no publicly-visible constructors or
+	 * mutators. It is created by the {@link Roller#roll} method of its parent
+	 * {@code Roller} instance.
+	 * 
+	 * @since 0.01.20151004
+	 */
+	public static class Result
+	{
+		/**
+		 * The total roll result. This is either the sum of all dice, or the
+		 * count of all successes.
+		 */
+		protected short m_zValue ;
+		
+		/** An array of the results from the individual dice. */
+		protected short[] m_azDieResults ;
+		
+		/** A result object <i>must</i> be given an initial size. */
+		@SuppressWarnings( "unused" )
+		private Result() {}
+		
+		/**
+		 * Constructs the result with an explicit size for the die results
+		 * array.
+		 * @param nSize the number of dice that were rolled
+		 * @throws IllegalArgumentException if the size is less than zero
+		 */
+		protected Result( int nSize )
+		throws IllegalArgumentException
+		{
+			if( nSize < 0 )
+				throw exceptInvalidSize(nSize) ;
+			else if( nSize == 0 )
+				m_azDieResults = null ;
+			else
+				m_azDieResults = new short[nSize] ;
+			
+			m_zValue = 0 ;
+		}
+		
+		/**
+		 * Creates an {@link IllegalArgumentException} with consistent text.
+		 * Consumed by the constructor.
+		 * @param z the invalid initial size
+		 * @return "<b>Invalid size specification [</b><i>size</i><b>] for roll
+		 *  result array.</b>"
+		 */
+		protected static IllegalArgumentException exceptInvalidSize( int z )
+		{
+			StringBuffer sb = new StringBuffer() ;
+			sb.append( "Invalid size specification [" )
+			  .append( z )
+			  .append( "] for roll result array." )
+			  ;
+			return new IllegalArgumentException( sb.toString() ) ;
+		}
+
+		/**
+		 * Accessor for the array of individual die results.
+		 * @return the array of results for each individual rolled die
+		 */
+		public short[] getDieResults()
+		{ return m_azDieResults ; }
+
+		/**
+		 * Accessor for the defined total "value" of the result.
+		 * @return the value of the result
+		 */
+		public short getValue()
+		{ return m_zValue ; }
+	} // end inner class Result
+	
 	/** Marks the beginning of a die type specification. */
 	public static final char DIE_TYPE_OPERATOR = 'd' ;
 	/** Marks the beginning of a bonus specification. */
@@ -37,6 +113,9 @@ public class Roller
 	 */
 	protected static enum ParsingState
 	{ DICE, DIE_TYPE, BONUS, KEEP, SUCCESS, EXPLODED }
+	
+	protected static final Random RNG ;
+	static { RNG = new Random() ; }
 	
 	/**
 	 * Parses a dice roll specification from a string.
@@ -141,21 +220,6 @@ public class Roller
 	}
 	
 	/**
-	 * Wrapper for {@link #parse} which eats any {@link ParseException} and
-	 * dumps it to the system's error log.
-	 * @param sSpec a specification of a die roll
-	 * @return
-	 */
-	public static Roller parseCarelessly( String sSpec )
-	{
-		Roller rl = null ;
-		try { rl = parse(sSpec) ; }
-		catch( ParseException px )
-		{ System.err.println(px.getMessage()) ; }
-		return rl ;
-	}
-
-	/**
 	 * Creates a {@link ParseException} with consistent text. 
 	 * @param sSpec the invalid roll spec
 	 * @param zPosition the position at which parsing failed; this will equal
@@ -184,6 +248,21 @@ public class Roller
 		return new ParseException( sb.toString(), zPosition ) ;
 	}
 	
+	/**
+	 * Wrapper for {@link #parse} which eats any {@link ParseException} and
+	 * dumps it to the system's error log.
+	 * @param sSpec a specification of a die roll
+	 * @return
+	 */
+	public static Roller parseCarelessly( String sSpec )
+	{
+		Roller rl = null ;
+		try { rl = parse(sSpec) ; }
+		catch( ParseException px )
+		{ System.err.println(px.getMessage()) ; }
+		return rl ;
+	}
+
 	/**
 	 * Convenience method to verify that an integer value can be stuffed into
 	 * one of the short-sized fields.
@@ -498,7 +577,120 @@ public class Roller
 	 */
 	public Roller setExplode( boolean bExplode )
 	{ m_bExplode = bExplode ; return this ; }
+	
+	/**
+	 * Executes the roll specified by this object's fields.
+	 * @return the result of the die roll
+	 */
+	public Result roll()
+	{
+		Result res = new Result(m_nDice) ;
+		if( m_nDice == 0 ) return res ;
+		if( m_nType == 0 ) return res ;
+		if( m_nKeep == 0 ) return res ;
+		
+		for( int i = 0 ; i < m_nDice ; i++ )
+			res.m_azDieResults[i] = this.rollOneDie() ;
+		
+		// Set result value based on kept dice or all dice.
+		res.m_zValue = this.evaluate(( m_nKeep != NOT_SET
+						? this.getKeptDice( res.m_azDieResults )
+						: res.m_azDieResults
+					)) ;
+		
+		return res ;
+	}
+	
+	/**
+	 * Rolls one die. If the {@link Roller} is set with a target number for each
+	 * die, then the bonus is applied to the die immediately. If the
+	 * {@code Roller} is set to explode dice, then keep rolling this die until
+	 * it stops exploding.
+	 * 
+	 * Consumed by {@link #roll}.
+	 * 
+	 * @return the total result for a single die roll
+	 */
+	protected short rollOneDie()
+	{
+		short zDie = 0 ;
+		if( m_bExplode )
+		{
+			short zRoll ;
+			do
+			{
+				zRoll = (short)( RNG.nextInt(m_nType) + 1 ) ;
+				zDie += zRoll ;
+			} while( zRoll == m_nType ) ;
+		}
+		else
+			zDie = (short)( RNG.nextInt(m_nType) + 1 ) ;
+		if( m_nTarget != NOT_SET )
+		{ // Bonus should influence each die vs. target, not total.
+			zDie += m_nBonus ;
+		}
+		return zDie ;
+	}
+	
+	/**
+	 * Returns an array of only the kept dice from a larger array of all die
+	 * results.
+	 * 
+	 * Consumed by {@link #roll}.
+	 * 
+	 * @param azAllDice an array of all die results
+	 * @return an array of only the <i>n</i> highest results
+	 */
+	protected short[] getKeptDice( short[] azAllDice )
+	{
+		short[] azHighest = new short[m_nKeep] ;
+		for( int i = 0 ; i < m_nKeep ; i++ )
+			azHighest[i] = Short.MIN_VALUE ;
+		for( int iDie = 0 ; iDie < m_nDice ; iDie++ )
+		{ // Determine whether each value is "highest" and should be kept.
+			short zCurrent = azAllDice[iDie] ;
+			for( int iHighest = 0 ; iHighest < m_nKeep ; iHighest++ )
+			{ // Push the value through the array.
+				if( zCurrent > azHighest[iHighest] )
+				{ // Swap the current value for the formerly-high value.
+					short zTemp = azHighest[iHighest] ;
+					azHighest[iHighest] = zCurrent ;
+					zCurrent = zTemp ;
+				}
+			}
+		}
+		return azHighest ;
+	}
 
+	/**
+	 * Evaluates an array of individual die results based on the other fields of
+	 * the {@link Roller} object. This is a separate method because the results
+	 * being evaluated might not be the entire array in a {@link Result} object;
+	 * for example, it could be only the subset of <i>n</i> highest results.
+	 * 
+	 * Consumed by {@link #roll}.
+	 * 
+	 * @param azDieResults an array of die results
+	 * @return a sum of all results, or a count of successful results
+	 */
+	protected short evaluate( short[] azDieResults )
+	{
+		short zValue = 0 ;
+		if( m_nTarget != NOT_SET )
+		{ // Count successes from the array; bonus was applied to each die.
+			for( short zDie : azDieResults )
+				if( zDie >= m_nTarget )
+					++zValue ;
+		}
+		else
+		{ // Sum the elements of the array; add bonus at the end.
+			for( short zDie : azDieResults )
+				zValue += zDie ;
+			zValue += m_nBonus ;
+		}
+		return zValue ;
+	}
+	
 	/**
 	 * Compares two {@link Roller} instances, verifying that each field is
 	 * equal between the two.
@@ -532,6 +724,17 @@ public class Roller
 		catch( ParseException px ) { return false ; }
 	}
 	
+	/**
+	 * Serializes the {@link Roller} object as a string.
+	 * <p>Because the algorithm used by {@link #parse} does not enforce a
+	 * canonical order for the segments of the roll spec, there is no guarantee
+	 * that the following will be true for any valid string {@code sSpec}:</p>
+	 * <pre>sSpec.equals( Roller.parse(sSpec).toString() )</pre>
+	 * <p>However, for a given {@code Roller} instance {@code roll}, the
+	 * following test <i>is</i> guaranteed:</p>
+	 * <pre>roll.equals( Roller.parse(roll.toString()) )</pre>
+	 * @return a string representation of the roll
+	 */
 	@Override
 	public String toString()
 	{
@@ -539,15 +742,22 @@ public class Roller
 		sb.append( m_nDice )
 		  .append( DIE_TYPE_OPERATOR )
 		  .append( m_nType )
-		  .append(( m_nBonus > 0 ? PLUS_OPERATOR : MINUS_OPERATOR ))
-		  .append( m_nBonus )
 		  ;
+		
+		if( m_nBonus > 0 )
+			sb.append( PLUS_OPERATOR ).append( m_nBonus ) ;
+		else if( m_nBonus < 0 )
+			sb.append( MINUS_OPERATOR ).append( m_nBonus * -1 ) ;
+		
 		if( m_nKeep != NOT_SET )
 			sb.append( KEEP_OPERATOR ).append( m_nKeep ) ;
+		
 		if( m_nTarget != NOT_SET )
 			sb.append( SUCCESS_OPERATOR ).append( m_nTarget ) ;
+		
 		if( m_bExplode )
 			sb.append( EXPLODE_OPERATOR ) ;
+		
 		return sb.toString() ;
 	}
 }
