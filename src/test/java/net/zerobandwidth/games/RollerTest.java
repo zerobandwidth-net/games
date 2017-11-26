@@ -1,4 +1,4 @@
-package net.zerobandwidth.games.junit;
+package net.zerobandwidth.games;
 
 import static org.junit.Assert.*;
 
