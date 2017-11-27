@@ -1,7 +1,6 @@
 package net.zerobandwidth.games.cards.standard;
 
 import java.util.ArrayList;
-//import java.util.Collections;
 
 import net.zerobandwidth.games.cards.AbstractDeck;
 import net.zerobandwidth.games.cards.Deck;
@@ -26,15 +25,6 @@ implements Deck<PlayingCard>
 	public static final long DOUBLE_DECK = 4L ;
 	
 /// Member fields //////////////////////////////////////////////////////////////
-	
-	/**
-	 * The complete deck of cards. A pointer into the deck indicates the "next"
-	 * card to be dealt.
-	 */
-//	protected ArrayList<PlayingCard> m_aCards = null ;
-	
-	/** The "next" card to be dealt from the deck. */
-//	protected int m_nNext = 0 ;
 	
 	/**
 	 * Flags used at creation time to dictate special behavior in the various
@@ -75,20 +65,6 @@ implements Deck<PlayingCard>
 	}
 	
 /// net.zerobandwidth.games.cards.Deck /////////////////////////////////////////
-	
-	/*
-	 * Fully randomizes the cards by shuffling seven times. They say it takes
-	 * seven shuffles to fully randomize a physical deck of cards, so why not
-	 * apply the same here?
-	 //
-	@Override
-	public PlayingCardDeck shuffle()
-	{
-		for( int i = 0 ; i < 7 ; i++ )
-			Collections.shuffle( m_aCards ) ;
-		m_nNext = 0 ;
-		return this ;
-	}*/
 
 	/**
 	 * @throws UnsupportedOperationException <i>(not yet implemented)</i>
@@ -97,40 +73,6 @@ implements Deck<PlayingCard>
 	public PlayingCardDeck shuffleRemaining()
 	{ throw new UnsupportedOperationException( "Not yet implemented." ) ; }
 
-	/*
-	 * @return the next unseen card from the deck, or {@code null} if we've run
-	 *  off the bottom of the deck
-	 //
-	@Override
-	public PlayingCard next()
-	{
-		if( m_nNext >= m_aCards.size() ) // We've run off the bottom of the deck.
-			return null ;
-		return m_aCards.get( m_nNext++ ) ;
-	}*/
-/*
-	@Override
-	public PlayingCard[] peek( int nCards )
-	{
-		PlayingCard aCards[] = new PlayingCard[nCards] ;
-		for( int i = 0 ; i < nCards ; i++ )
-		{
-			if( m_nNext + i < m_aCards.size() )
-				aCards[i] = m_aCards.get( m_nNext + i ) ;
-			else
-				aCards[i] = null ;
-		}
-		return aCards ;
-	}
-
-	@Override
-	public int size()
-	{ return m_aCards.size() ; }
-
-	@Override
-	public int countRemaining()
-	{ return m_aCards.size() - m_nNext ; }
-*/
 /// net.zerobandwidth.games.cards.AbstractDeck /////////////////////////////////
 	
 	/**
