@@ -11,8 +11,8 @@ import net.zerobandwidth.games.cards.Suit;
  * <p>The concept of card "rank" is used in this context to specify the number
  * of spaces that the card allows the player to move. The canonical card deck
  * for <i>Sorry!</i> includes four copies of each of ranks 2, 3, 4, 5, 7, 8, 10,
- * 11, 12, and "Sorry!", and five copies of rank 1. The "Sorry!" cards are
- * assigned rank 0.</p>
+ * 11, 12, and "Sorry!", and five copies of rank 1, for a total of 45 cards.
+ * The "Sorry!" cards are assigned rank 0.</p>
  * 
  * <h3>Suits</h3>
  *
