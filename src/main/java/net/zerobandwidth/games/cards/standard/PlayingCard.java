@@ -110,8 +110,8 @@ implements Card
 	{ return ( this.m_suit == BLACK_JOKER || this.m_suit == RED_JOKER ) ; }
 	
 	/**
-	 * Renders the rank and suit of the text as it might appear in the corner
-	 * of the card; for example, "Q&#2660;".
+	 * Renders the rank and suit of the card as it might appear in the corner
+	 * of the card; for example, "Q&#9824;".
 	 * @return the corner text of the card
 	 */
 	public String renderCornerText()
