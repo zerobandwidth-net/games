@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import net.zerobandwidth.games.cards.standard.PlayingCard;
 import net.zerobandwidth.games.cards.standard.PlayingCardDeckTest;
 
 import static net.zerobandwidth.games.cards.standard.PlayingCards.ACE ;
