@@ -1,5 +1,7 @@
 package net.zerobandwidth.games.cards;
 
+import java.util.List;
+
 /**
  * Interface for interacting with a deck of cards.
  * @since [NEXT]
@@ -28,9 +30,9 @@ public interface Deck<C extends Card>
 	/**
 	 * Peek at the next <i>n</i> cards that would be drawn from the deck.
 	 * @param nCards the number of cards to include in the peek
-	 * @return an array of the next <i>n</i> cards on top of the deck
+	 * @return a list of the next <i>n</i> cards on top of the deck
 	 */
-	C[] peek( int nCards ) ;
+	List<C> peek( int nCards ) ;
 	
 	/**
 	 * Indicates the total size of the deck (dealt and undealt).

@@ -3,6 +3,8 @@ package net.zerobandwidth.games.cards.standard;
 import static org.junit.Assert.*;
 import static net.zerobandwidth.games.cards.standard.PlayingCardDeck.* ;
 
+import java.util.List ;
+import java.util.ArrayList ;
 import org.junit.Test;
 
 /**
@@ -19,15 +21,17 @@ public class PlayingCardDeckTest
 	public static void dumpDeckContents( PlayingCardDeck deck )
 	{
 		StringBuilder sb = new StringBuilder() ;
-		for( PlayingCard card : deck.m_aCards )
-			sb.append( card.renderCornerText() ).append( " " ) ;
+		sb.append( deck.getClass().getSimpleName() )
+		  .append( " card dump: " )
+		  ;
+		while( deck.countRemaining() > 0 )
+			sb.append( deck.next().renderCornerText() ).append( " " ) ;
 		System.out.println( sb.toString() ) ;
 	}
 
 	/**
 	 * Exercises the various constructors.
-	 * Implies testing of {@link PlayingCardDeck#init},
-	 * {@link PlayingCardDeck#addRankedCards}, and {@link PlayingCardDeck#size}.
+	 * Implies testing of {@link PlayingCardDeck#addRankedCards}.
 	 */
 	@Test
 	public void testConstructors()
@@ -80,41 +84,29 @@ public class PlayingCardDeckTest
 	{
 		PlayingCardDeck deck = new PlayingCardDeck() ;
 		deck.shuffle() ;              // Observe, there is nothing up my sleeve!
+		ArrayList<PlayingCard> aCards = deck.getCards() ;
 		for( int i = 0 ; i < 52 ; i++ )
-			assertTrue( deck.next().equals( deck.m_aCards.get(i) ) ) ;
+			assertTrue( deck.next().equals( aCards.get(i) ) ) ;
 		assertNull( deck.next() ) ;
 	}
 	
-	/** Exercises {@link PlayingCardDeck#peek}. */
+	/**
+	 * Exercises {@link PlayingCardDeck#peek}.
+	 * Beyond testing the basic operation of {@link AbstractDeck#peek}, this
+	 * method verifies that we get the exact card that we expect at each
+	 * position in a given peek result set.
+	 */
 	@Test
 	public void testPeek()
 	{
 		PlayingCardDeck deck = new PlayingCardDeck() ;
 		deck.shuffle() ;           // The microprocessor is faster than the eye!
-		PlayingCard aPeeked[] = deck.peek(5) ;
-		for( int i = 0 ; i < 5 ; i++ )
-			assertTrue( aPeeked[i].equals( deck.m_aCards.get(i) ) ) ;
-		deck.m_nNext = 50 ;      // Force the pointer forward to almost the end.
-		aPeeked = deck.peek(5) ;
-		assertTrue( aPeeked[0].equals( deck.m_aCards.get(50) ) ) ;
-		assertTrue( aPeeked[1].equals( deck.m_aCards.get(51) ) ) ;
-		assertNull( aPeeked[2] ) ;
-		assertNull( aPeeked[3] ) ;
-		assertNull( aPeeked[4] ) ;
-	}
-	
-	/** Exercises {@link PlayingCardDeck#countRemaining}. */
-	@Test
-	public void testCountRemaining()
-	{
-		PlayingCardDeck deck = new PlayingCardDeck() ;
-		assertEquals( 52, deck.countRemaining() ) ;
-		deck.next() ; assertEquals( 51, deck.countRemaining() ) ;
-		deck.next() ; assertEquals( 50, deck.countRemaining() ) ;
-		deck.m_nNext = 50 ;      // Force the pointer forward to almost the end.
-		assertEquals( 2, deck.countRemaining() ) ;
-		deck.next() ; assertEquals( 1, deck.countRemaining() ) ;
-		deck.next() ; assertEquals( 0, deck.countRemaining() ) ;
-		deck.next() ; assertEquals( 0, deck.countRemaining() ) ;
+		ArrayList<PlayingCard> aCards = deck.getCards() ;
+		List<PlayingCard> aPeeked = deck.peek(55) ;
+		for( int i = 0 ; i < 52 ; i++ )
+			assertTrue( aPeeked.get(i).equals( aCards.get(i) ) ) ;
+		assertNull( aPeeked.get(52) ) ;
+		assertNull( aPeeked.get(53) ) ;
+		assertNull( aPeeked.get(54) ) ;
 	}
 }

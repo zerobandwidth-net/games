@@ -32,7 +32,6 @@ implements Deck<PlayingCard>
 	@Override
 	protected EuchreDeck addRankedCards()
 	{
-		System.err.println( "reached EuchreDeck.addRankedCards()" ) ;
 		for( int zRank = 7 ; zRank <= 13 ; zRank++ )
 		{
 			m_aCards.add( new PlayingCard( HEARTS, zRank ) ) ;
