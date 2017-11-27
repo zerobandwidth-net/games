@@ -6,7 +6,7 @@ import java.util.Random;
 /**
  * Describes a procedure for rolling dice, and provides methods to execute that
  * roll.
- * @since 0.01.20151004
+ * @since [NEXT]
  */
 public class Roller
 {
@@ -17,7 +17,7 @@ public class Roller
 	 * mutators. It is created by the {@link Roller#roll} method of its parent
 	 * {@code Roller} instance.
 	 * 
-	 * @since 0.01.20151004
+	 * @since [NEXT]
 	 */
 	public static class Result
 	{
