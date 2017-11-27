@@ -3,6 +3,13 @@ package net.zerobandwidth.games.cards.standard;
 import net.zerobandwidth.games.cards.Card;
 import net.zerobandwidth.games.cards.Suit;
 
+import static net.zerobandwidth.games.cards.standard.PlayingCards.BLACK_JOKER;
+import static net.zerobandwidth.games.cards.standard.PlayingCards.RED_JOKER;
+import static net.zerobandwidth.games.cards.standard.PlayingCards.JOKER;
+
+import static net.zerobandwidth.games.cards.standard.PlayingCards.RANK_SYMBOLS;
+import static net.zerobandwidth.games.cards.standard.PlayingCards.RANK_LABELS;
+
 /**
  * Implements a standard playing card.
  * @since [NEXT] (#1)
@@ -41,17 +48,22 @@ implements Card
 	 * @see PlayingCards#isValidRank(int)
 	 */
 	@Override
-	public Card setRank( int zRank )
+	public PlayingCard setRank( int zRank )
 	throws IllegalArgumentException
 	{
 		if( ! PlayingCards.isValidRank(zRank) )
 		{
 			throw new IllegalArgumentException( (new StringBuilder())
-					.append( "Cannot construct card with invalid rank [" )
+					.append( "Cannot set invalid rank [" )
 					.append( zRank )
-					.append( "]." )
+					.append( "] to a card." )
 					.toString()
 				);
+		}
+		if( this.isJoker() && zRank != JOKER )
+		{
+			throw new IllegalArgumentException(
+				"Must set a joker's rank to 0." ) ;
 		}
 		m_zRank = zRank ;
 		return this ;
@@ -62,8 +74,12 @@ implements Card
 	{ return m_suit ; }
 
 	@Override
-	public Card setSuit( Suit suit )
-	{ m_suit = suit ; return this ; }
+	public PlayingCard setSuit( Suit suit )
+	{
+		m_suit = suit ;
+		if( this.isJoker() ) this.setRank( JOKER ) ;
+		return this ;
+	}
 	
 /// Other methods //////////////////////////////////////////////////////////////
 
@@ -85,4 +101,51 @@ implements Card
 			);
 	}
 	
+	/**
+	 * Indicates whether this card belongs to one of the "joker" suits,
+	 * {@link PlayingCards#BLACK_JOKER} or {@link PlayingCards#RED_JOKER}.
+	 * @return {@code true} iff the card belongs to a joker suit.
+	 */
+	public boolean isJoker()
+	{ return ( this.m_suit == BLACK_JOKER || this.m_suit == RED_JOKER ) ; }
+	
+	/**
+	 * Renders the rank and suit of the text as it might appear in the corner
+	 * of the card; for example, "Q&#2660;".
+	 * @return the corner text of the card
+	 */
+	public String renderCornerText()
+	{
+		StringBuilder sb = new StringBuilder() ;
+		if( ! this.isJoker() )
+			sb.append( RANK_SYMBOLS[m_zRank] ).append( m_suit.getSymbol() ) ;
+		else
+			sb.append( m_suit.getSymbol() ).append( RANK_SYMBOLS[JOKER] ) ;
+		return sb.toString() ;
+	}
+	
+	/**
+	 * Renders a full textual description of the card's rank and suit; for
+	 * example, "queen of spades".
+	 * @return a full description of the card
+	 */
+	public String describe()
+	{
+		StringBuilder sb = new StringBuilder() ;
+		if( ! this.isJoker() )
+		{ // Describe a normal card.
+			sb.append( RANK_LABELS[m_zRank] )
+			  .append( " of " )
+			  .append( m_suit.getLabel() )
+			  ;
+		}
+		else
+		{ // Describe a joker.
+			sb.append( m_suit.getLabel() )
+			  .append( " " )
+			  .append( RANK_LABELS[JOKER] )
+			  ;
+		}
+		return sb.toString() ;
+	}
 }
