@@ -16,7 +16,7 @@ public class PlayingCardDeckTest
 	 * for visual inspection.
 	 * @param deck the deck to be rendered
 	 */
-	protected static void dumpDeckContents( PlayingCardDeck deck )
+	public static void dumpDeckContents( PlayingCardDeck deck )
 	{
 		StringBuilder sb = new StringBuilder() ;
 		for( PlayingCard card : deck.m_aCards )
