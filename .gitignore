@@ -15,3 +15,9 @@ hs_err_pid*
 # Eclipse project files
 .classpath
 .project
+
+# Gradle-related artifacts
+/.gradle/
+/gradle/
+.settings/
+build/
