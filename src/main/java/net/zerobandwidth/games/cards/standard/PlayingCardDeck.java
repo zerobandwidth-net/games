@@ -1,8 +1,8 @@
 package net.zerobandwidth.games.cards.standard;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
+import net.zerobandwidth.games.cards.AbstractDeck;
 import net.zerobandwidth.games.cards.Deck;
 
 import static net.zerobandwidth.games.cards.standard.PlayingCards.* ;
@@ -12,6 +12,7 @@ import static net.zerobandwidth.games.cards.standard.PlayingCards.* ;
  * @since [NEXT] (#1)
  */
 public class PlayingCardDeck
+extends AbstractDeck<PlayingCardDeck,PlayingCard>
 implements Deck<PlayingCard>
 {
 /// Constants: creation control flags //////////////////////////////////////////
@@ -26,15 +27,10 @@ implements Deck<PlayingCard>
 /// Member fields //////////////////////////////////////////////////////////////
 	
 	/**
-	 * The complete deck of cards. A pointer into the deck indicates the "next"
-	 * card to be dealt.
+	 * Flags used at creation time to dictate special behavior in the various
+	 * initializers. 
 	 */
-	protected ArrayList<PlayingCard> m_aCards = null ;
-	
-	/**
-	 * The "next" card to be dealt from the deck.
-	 */
-	protected int m_nNext = 0 ;
+	protected long m_bmFlags = 0L ;
 
 /// Constructors and initializers //////////////////////////////////////////////
 	
@@ -43,38 +39,17 @@ implements Deck<PlayingCard>
 	 * add either of the jokers.
 	 */
 	public PlayingCardDeck()
-	{ this.init( 0L ) ; }
+	{ m_bmFlags = 0L ; this.init() ; }
 	
 	/**
 	 * Constructs an instance with one or both jokers.
 	 * @param zFlags various flags that control what goes into the deck
 	 */
 	public PlayingCardDeck( long zFlags )
-	{ this.init( zFlags ) ; }
+	{ m_bmFlags = zFlags ; this.init() ; }
 	
 	/**
-	 * Initializes the deck.
-	 * @param zFlags various flags that control what goes into the deck
-	 * @return (fluid)
-	 */
-	protected PlayingCardDeck init( long zFlags )
-	{
-		m_aCards = new ArrayList<>() ;
-		this.addRankedCards() ;
-		if( ( zFlags & DOUBLE_DECK ) == DOUBLE_DECK )
-			this.addRankedCards() ;
-		if( ( zFlags & WITH_BLACK_JOKER ) == WITH_BLACK_JOKER )
-			m_aCards.add( new PlayingCard( BLACK_JOKER, JOKER ) ) ;
-		if( ( zFlags & WITH_RED_JOKER ) == WITH_RED_JOKER )
-			m_aCards.add( new PlayingCard( RED_JOKER, JOKER ) ) ;
-		
-		m_nNext = 0 ;
-		
-		return this ;
-	}
-	
-	/**
-	 * Used by {@link #init} to add a set of 52 ranked cards to the deck.
+	 * Used by {@link #addCards} to add a set of 52 ranked cards to the deck.
 	 * @return
 	 */
 	protected PlayingCardDeck addRankedCards()
@@ -90,20 +65,6 @@ implements Deck<PlayingCard>
 	}
 	
 /// net.zerobandwidth.games.cards.Deck /////////////////////////////////////////
-	
-	/**
-	 * Fully randomizes the cards by shuffling seven times. They say it takes
-	 * seven shuffles to fully randomize a physical deck of cards, so why not
-	 * apply the same here?
-	 */
-	@Override
-	public PlayingCardDeck shuffle()
-	{
-		for( int i = 0 ; i < 7 ; i++ )
-			Collections.shuffle( m_aCards ) ;
-		m_nNext = 0 ;
-		return this ;
-	}
 
 	/**
 	 * @throws UnsupportedOperationException <i>(not yet implemented)</i>
@@ -112,40 +73,33 @@ implements Deck<PlayingCard>
 	public PlayingCardDeck shuffleRemaining()
 	{ throw new UnsupportedOperationException( "Not yet implemented." ) ; }
 
+/// net.zerobandwidth.games.cards.AbstractDeck /////////////////////////////////
+	
 	/**
-	 * @return the next unseen card from the deck, or {@code null} if we've run
-	 *  off the bottom of the deck
+	 * Examines the flags sent in via the constructor to determine which cards
+	 * to add, and how many.
+	 * @see #addRankedCards()
 	 */
 	@Override
-	public PlayingCard next()
+	protected PlayingCardDeck addCards()
 	{
-		if( m_nNext >= m_aCards.size() ) // We've run off the bottom of the deck.
-			return null ;
-		return m_aCards.get( m_nNext++ ) ;
+		this.addRankedCards() ;
+		if( ( m_bmFlags & DOUBLE_DECK ) == DOUBLE_DECK )
+			this.addRankedCards() ; // again
+		if( ( m_bmFlags & WITH_BLACK_JOKER ) == WITH_BLACK_JOKER )
+			m_aCards.add( new PlayingCard( BLACK_JOKER, JOKER ) ) ;
+		if( ( m_bmFlags & WITH_RED_JOKER ) == WITH_RED_JOKER )
+			m_aCards.add( new PlayingCard( RED_JOKER, JOKER ) ) ;
+		return this ;
 	}
-
-	@Override
-	public PlayingCard[] peek( int nCards )
-	{
-		PlayingCard aCards[] = new PlayingCard[nCards] ;
-		for( int i = 0 ; i < nCards ; i++ )
-		{
-			if( m_nNext + i < m_aCards.size() )
-				aCards[i] = m_aCards.get( m_nNext + i ) ;
-			else
-				aCards[i] = null ;
-		}
-		return aCards ;
-	}
-
-	@Override
-	public int size()
-	{ return m_aCards.size() ; }
-
-	@Override
-	public int countRemaining()
-	{ return m_aCards.size() - m_nNext ; }
 	
 /// Other methods //////////////////////////////////////////////////////////////
 	
+	/**
+	 * Concealed accessor for the actual collection of card instances.
+	 * Should not be consumed generally; intended only for unit tests.
+	 * @return the collection of cards
+	 */
+	protected ArrayList<PlayingCard> getCards()
+	{ return m_aCards ; }
 }
