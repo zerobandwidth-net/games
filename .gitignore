@@ -17,7 +17,10 @@ hs_err_pid*
 .project
 
 # Gradle-related artifacts
-/.gradle/
-/gradle/
+.gradle/
+gradle/
 .settings/
 build/
+
+# Android Studio artifacts (generated when used as a library)
+*.iml

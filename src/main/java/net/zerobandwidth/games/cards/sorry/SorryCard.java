@@ -122,7 +122,7 @@ public class SorryCard implements Card
 	/**
 	 * Renders the rank and "suit" of the card as it might appear in the corner
 	 * of the card; for example, "10&#9654;" or "&#9664;4". 
-	 * @return
+	 * @return the text to be shown in the corner of the card
 	 */
 	public String renderCornerText()
 	{
