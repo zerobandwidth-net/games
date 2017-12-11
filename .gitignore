@@ -24,3 +24,7 @@ build/
 
 # Android Studio artifacts (generated when used as a library)
 *.iml
+.idea/
+
+# Other
+*.swp
